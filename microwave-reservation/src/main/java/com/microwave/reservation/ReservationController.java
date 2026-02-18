@@ -76,8 +76,14 @@ public class ReservationController {
 
     // 全削除（リセット）
     @PostMapping("/reset")
-    public void reset() {
-        repo.deleteAll();
+    public void reset(@RequestParam String password){
+
+      if(!"1234".equals(password)){
+        throw new RuntimeException("Invalid password");
+      }
+
+      repo.deleteAll();
     }
 }
+
 
