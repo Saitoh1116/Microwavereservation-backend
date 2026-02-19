@@ -1,9 +1,15 @@
 package com.microwave.reservation;
 
+
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.time.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import java.time.ZoneId;
+import java.time.LocalTime;
 
 @CrossOrigin(
   origins = {
@@ -15,9 +21,21 @@ import java.time.*;
 public class ReservationController {
 
     private final ReservationRepository repo;
+    
+    @Value("${admin.resetToken}")
+    private String resetToken;
+
 
     public ReservationController(ReservationRepository repo) {
         this.repo = repo;
+    }
+
+    private static final ZoneId JST = ZoneId.of("Asia/Tokyo");
+
+    private boolean isWithinAcceptanceHours(){
+      LocalTime now = LocalTime.now(JST);
+      return !now.isBefore(LocalTime.of(8,30))
+        && !now.isAfter(LocalTime.of(12,30));
     }
 
     // 全件取得
@@ -29,9 +47,17 @@ public class ReservationController {
     // 予約登録
     @PostMapping
     public Reservation create(@RequestBody Reservation r) {
-        r.setStatus("WAITING");
-        r.setCreatedAt(LocalDateTime.now());
-        return repo.save(r);
+      
+      if(!isWithinAcceptanceHours()){
+        throw new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "受付時間外です"
+        );
+      }
+
+      r.setStatus("WAITING");
+      r.setCreatedAt(LocalDateTime.now(JST));
+      return repo.save(r);
     }
 
     // 次の人を開始
@@ -49,7 +75,7 @@ public class ReservationController {
 
         if (next != null) {
             next.setStatus("USING");
-            next.setStartTime(LocalDateTime.now());
+            next.setStartTime(LocalDateTime.now(JST));
             return repo.save(next);
         }
 
@@ -81,12 +107,11 @@ public class ReservationController {
 
     // 全削除（リセット）
     @PostMapping("/reset")
-    public void reset(@RequestParam String password){
+    public void reset(@RequestParam String token){
 
-      if(!"1636".equals(password)){
-        throw new RuntimeException("Invalid password");
+      if(!resetToken.equals(token)){
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN);
       }
-
       repo.deleteAll();
     }
 }
