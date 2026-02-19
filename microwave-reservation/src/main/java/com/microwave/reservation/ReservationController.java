@@ -3,8 +3,13 @@ package com.microwave.reservation;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.time.*;
 
-@CrossOrigin(origins = "*")
+@CrossOrigin(
+  origins = {
+    "https://microwavereservationpages.dev"
+    }
+  )
 @RestController
 @RequestMapping("/api/reservations")
 public class ReservationController {
