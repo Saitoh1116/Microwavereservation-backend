@@ -83,7 +83,7 @@ public class ReservationController {
     @PostMapping("/reset")
     public void reset(@RequestParam String password){
 
-      if(!"1234".equals(password)){
+      if(!"1636".equals(password)){
         throw new RuntimeException("Invalid password");
       }
 
